@@ -6,11 +6,15 @@ class trade_stat():
     def __init__(self):
         self.trade_total_count = 0
         self.trade_success_count = 0
+        self.earn_money = 0
+        self.lost_money = 0
         self.statis = {'win': [], 'loss': []}
         
     def reset(self):
         self.trade_total_count = 0
         self.trade_success_count = 0
+        self.earn_money = 0
+        self.lost_money = 0
         self.statis = {'win': [], 'loss': []}
     
     # 记录交易次数便于统计胜率
@@ -22,10 +26,12 @@ class trade_stat():
 
         percent = round((current_value - cost) / cost * 100, 2)
         if current_value > cost:
+            self.earn_money += current_value - cost
             self.trade_success_count += 1
             win = [stock, percent]
             self.statis['win'].append(win)
         else:
+            self.lost_money += cost - current_value
             loss = [stock, percent]
             self.statis['loss'].append(loss)
         
@@ -36,7 +42,26 @@ class trade_stat():
         log.info("收盘后持仓概况:%s" % str(list(context.portfolio.positions)))
         log.info("仓位概况:%.2f" % position)
         self.print_win_rate(context.current_dt.strftime("%Y-%m-%d"), context.current_dt.strftime("%Y-%m-%d"), context)
-
+        self.print_win_lost(context.current_dt.strftime("%Y-%m-%d"), context.current_dt.strftime("%Y-%m-%d"), context)
+    
+    # 打印均赢额，均亏额，盈亏比
+    def print_win_lost(self, current_date, print_date, context):
+        if str(current_date) == str(print_date):
+            jye = 0
+            jke = 0
+            ykb = 0
+            if 0 < self.trade_total_count and 0 < self.trade_success_count:
+                jye = round(self.earn_money/float(self.trade_total_count),3)
+                jke = round(self.lost_money/float(self.trade_total_count),3)
+                if jke > 0:
+                    ykb = round(jye/jke,3)
+            print "-"
+            print '------------盈亏比报表------------'
+            print '均赢额:{0}, 均亏额{1}, 盈亏比{2}'.format(jye, jke, str(ykb * 100) + str('%'))
+            print '--------------------------------'
+            print "-"
+            
+            
     # 打印胜率
     def print_win_rate(self, current_date, print_date, context):
         if str(current_date) == str(print_date):
